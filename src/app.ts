@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 import { db } from '#db';
 import { ObjectId } from 'mongodb';
 import { Command } from 'commander';
@@ -119,3 +120,6 @@ program
 
 program.hook('postAction', () => process.exit(0));
 program.parse();
+=======
+console.log('Basic Node + TS scaffolding');
+>>>>>>> a1ab9d7aa2dcd7eb38b3da0308ba879473d4acf5
