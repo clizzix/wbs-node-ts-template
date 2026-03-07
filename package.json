@@ -1,5 +1,4 @@
 {
-<<<<<<< HEAD
     "name": "wbs-node-ts-template",
     "version": "1.0.0",
     "description": "",
@@ -10,7 +9,8 @@
         "#utils": {
             "development": "./src/utils/index.ts",
             "default": "./dist/utils/index.js"
-        }
+        },
+        "#models": "./src/models/index.ts"
     },
     "scripts": {
         "start": "node --env-file=.env src/app.ts"
@@ -24,33 +24,7 @@
     },
     "dependencies": {
         "commander": "^14.0.3",
-        "mongodb": "^7.1.0"
+        "mongodb": "^7.1.0",
+        "mongoose": "^9.2.4"
     }
-=======
-  "name": "wbs-node-ts-template",
-  "version": "1.0.0",
-  "description": "",
-  "main": "dist/app.js",
-  "type": "module",
-  "imports": {
-    "#utils": {
-      "development": "./src/utils/index.ts",
-      "default": "./dist/utils/index.js"
-    }
-  },
-  "scripts": {
-    "dev": "node --watch --conditions development src/app.ts",
-    "prebuild": "rm -rf dist",
-    "build": "tsc",
-    "prestart": "npm run build",
-    "start": "node dist/app.js"
-  },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
-  "devDependencies": {
-    "@types/node": "^24.10.12",
-    "typescript": "^5.9.3"
-  }
->>>>>>> a1ab9d7aa2dcd7eb38b3da0308ba879473d4acf5
 }

@@ -1,15 +1,14 @@
-<<<<<<< HEAD
-import { db } from '#db';
+import '#db';
 import { ObjectId } from 'mongodb';
 import { Command } from 'commander';
+import { Product } from '#models';
+import type { ProductType } from '#types';
 
 const program = new Command();
 program
     .name('ecommerce-cli')
     .description('Simple product CRUD CLI')
     .version('1.0.0');
-
-const products = db.collection('products');
 
 // CREATE
 program
@@ -18,24 +17,31 @@ program
     .argument('<name>', 'Product name')
     .argument('<stock>', 'Stock quantity')
     .argument('<price>', 'Product price')
-    .argument('<tags>', 'Comma-separated tags')
+    .argument('[tags]', 'Comma-separated tags')
     .action(
         async (
             name: string,
             stockStr: string,
             priceStr: string,
-            tagsStr: string,
+            tagsStr?: string,
         ) => {
-            const newProduct = {
+            const productData = {
                 name,
                 stock: parseInt(stockStr, 10),
                 price: parseFloat(priceStr),
-                tags: tagsStr.split(',').map((tag: string) => tag.trim()),
-            };
+                tags: tagsStr
+                    ? tagsStr.split(',').map((tag: string) => tag.trim())
+                    : [],
+            } satisfies ProductType;
 
-            // fill with formatted inputs
-            const result = await products.insertOne(newProduct);
-            console.log(`Product added with ID: ${result.insertedId}`);
+            let newProduct = await Product.findOne({ name: productData.name });
+
+            if (!newProduct) {
+                newProduct = await Product.create(productData);
+                console.log(`Product added with ID: ${newProduct.id}`);
+            } else {
+                console.log(`Product "${name}" already exists.`);
+            }
         },
     );
 
@@ -45,8 +51,12 @@ program
     .description('List all products')
     .action(async () => {
         console.log('CLI application was called with list command');
-        const allProducts = await products.find().toArray();
-        console.log(allProducts);
+        const allProducts = await Product.find();
+        for (const product of allProducts) {
+            console.log(
+                `Product: ${product.name}, Price: ${product.price}, Stock: ${product.stock}`,
+            );
+        }
     });
 
 // READ - Get product by id
@@ -55,17 +65,12 @@ program
     .description('Get product by ID')
     .argument('<id>', 'Product ID')
     .action(async (id) => {
-        const objId = ObjectId.createFromHexString(id);
-        const product = await products.findOne({ _id: objId });
-
+        const product = await Product.findById(id);
         if (product) {
             console.table(product);
         } else {
             console.log('No product found with that ID.');
         }
-
-        // search by _id using the objId
-        // const product = await products.findOne()
     });
 
 // SEARCH - search by tags
@@ -74,8 +79,8 @@ program
     .description('Search products by tag')
     .argument('<tag>', 'Product tag')
     .action(async (tag) => {
-        const matchingProducts = await products.find({ tags: tag }).toArray();
-        console.table(matchingProducts);
+        const matchingProducts = await Product.find({ tags: tag });
+        console.table(matchingProducts.map((p) => p.toObject()));
     });
 
 // UPDATE
@@ -87,21 +92,21 @@ program
     .argument('<stock>', 'Stock quantity')
     .argument('<price>', 'Product price')
     .argument('<tags>', 'Comma-separated tags')
-    .action(async (id, name, stockStr, priceStr, tagsStr) => {
-        const result = await products.updateOne(
-            {
-                _id: new ObjectId(id),
-            },
-            {
-                $set: {
-                    name,
-                    stock: parseInt(stockStr, 10),
-                    price: parseFloat(priceStr),
-                    tags: tagsStr.split(',').map((t: string) => t.trim()),
-                },
-            },
+    .action(async (id, name, stockStr, priceStr, tagsStr: string) => {
+        const stock = parseInt(stockStr, 10);
+        const price = parseFloat(priceStr);
+
+        const tags = tagsStr.split(',').map((tag) => tag.trim());
+        const result = await Product.findByIdAndUpdate(
+            id,
+            { name: name, stock: stock, price: price, tags: tags },
+            { returnDocument: 'after' },
         );
-        console.log(`${result.modifiedCount} document(s) updated.`);
+        if (!result) {
+            console.error('Product not found.');
+            return;
+        }
+        console.table([result.toObject()]);
     });
 
 // DELETE - delete product by id
@@ -110,9 +115,9 @@ program
     .description('Delete product by ID')
     .argument('<id>', 'Product ID')
     .action(async (id) => {
-        const result = await products.deleteOne({ _id: new ObjectId(id) });
-        if (result.deletedCount === 1) {
-            console.log('Successfully deleted product.');
+        const result = await Product.findByIdAndDelete(id);
+        if (result) {
+            console.log(`Successfully deleted product, ${result}`);
         } else {
             console.log('No product found to delete.');
         }
@@ -120,6 +125,8 @@ program
 
 program.hook('postAction', () => process.exit(0));
 program.parse();
-=======
-console.log('Basic Node + TS scaffolding');
->>>>>>> a1ab9d7aa2dcd7eb38b3da0308ba879473d4acf5
+
+if (process.argv.length <= 2) {
+    program.outputHelp();
+    process.exit(0);
+}
